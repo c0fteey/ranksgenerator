@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #121110;
+  --color-surface: #1a1917;
+  --color-raised: #23221f;
+  --color-line: #2e2c28;
+  --color-ink: #ecebe8;
+  --color-muted: #9a968d;
+  --color-gold: #e2b33c;
+  --color-gold-soft: #f0c75e;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+/* Theme tokens. Dark is the default; the inline script in layout.tsx sets data-theme="light". */
+:root {
+  --scroll-thumb: #3d3a34;
+  --stage-a: #0c0b0a;
+  --stage-b: #151412;
+  --grid-line: rgb(255 255 255 / 0.025);
+  --glow: rgb(226 179 60 / 0.07);
+}
+:root[data-theme="light"] {
+  --color-bg: #f5f4f0;
+  --color-surface: #ffffff;
+  --color-raised: #f0eee9;
+  --color-line: #e2dfd7;
+  --color-ink: #1b1a17;
+  --color-muted: #6b675e;
+  --color-gold: #b9881a;
+  --color-gold-soft: #a07412;
+  --scroll-thumb: #cfcbc1;
+  --stage-a: #e9e7e1;
+  --stage-b: #dedbd3;
+  --grid-line: rgb(0 0 0 / 0.035);
+  --glow: rgb(185 136 26 / 0.08);
+}
+
+@layer base {
+  html {
+    /* Dark native UI (page scrollbar, form controls); gutter avoids a jump when a dialog locks scrolling */
+    color-scheme: dark;
+    scrollbar-gutter: stable;
+    scrollbar-color: var(--scroll-thumb) var(--color-bg);
+  }
+  html[data-theme="light"] {
+    color-scheme: light;
+  }
+
+  body {
+    /* Soft gold glows over a faint grid, as in the designs */
+    background:
+      radial-gradient(60rem 40rem at 15% -10%, var(--glow), transparent 60%),
+      radial-gradient(50rem 40rem at 100% 110%, var(--glow), transparent 60%),
+      linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0 / 40px 40px,
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0 / 40px 40px,
+      var(--color-bg);
+    background-attachment: fixed;
+    color: var(--color-ink);
+    text-rendering: optimizeLegibility;
+    overflow-x: clip;
+  }
+
+  /* Thin themed scrollbars everywhere */
+  * {
+    scrollbar-width: thin;
+  }
+  body * {
+    scrollbar-color: var(--scroll-thumb) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  html::-webkit-scrollbar-track {
+    background: var(--color-bg);
+  }
+  ::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background: var(--scroll-thumb) padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-muted);
+  }
+
+  h1,
+  h2 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .input {
+    @apply w-full rounded-xl border border-line bg-raised px-4 py-2.5 text-sm outline-none transition-colors focus:border-gold;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-line bg-raised px-4 py-2.5 text-sm font-medium transition-colors hover:border-muted disabled:pointer-events-none disabled:opacity-40;
+  }
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gold px-5 py-2.5 text-sm font-semibold text-black transition hover:brightness-110 disabled:pointer-events-none disabled:opacity-40;
+  }
+  .card {
+    @apply rounded-2xl border border-line bg-surface/90 shadow-2xl shadow-black/20 backdrop-blur-sm;
+  }
+  .label {
+    @apply text-xs font-semibold uppercase tracking-wide text-muted;
+  }
+  /* Scroll area for long lists inside panels */
+  .scroll-area {
+    @apply max-h-[min(50dvh,28rem)] overflow-y-auto overscroll-contain rounded-xl pr-1;
+  }
+  .stage {
+    background-color: var(--stage-a);
+    background-image: conic-gradient(var(--stage-b) 25%, transparent 0 50%, var(--stage-b) 0 75%, transparent 0);
+    background-size: 14px 14px;
+  }
+}
+
+/* Unlayered on purpose: react-colorful injects unlayered styles that would beat any layer. */
+.color-picker .react-colorful {
+  @apply h-auto w-full gap-3;
+}
+.color-picker .react-colorful__saturation {
+  @apply h-44 rounded-xl border-b-0;
+}
+.color-picker .react-colorful__hue {
+  @apply h-3 rounded-full;
+}
+.color-picker .react-colorful__pointer {
+  @apply size-5 border-[3px] shadow-md shadow-black/50;
+}
+.color-picker .react-colorful__hue-pointer {
+  @apply size-4;
+}
