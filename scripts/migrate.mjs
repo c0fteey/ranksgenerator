@@ -2,7 +2,7 @@
 // Run with DATABASE_URL set:  npm run db:migrate   (reads .env.local if present)
 import { readFile } from "node:fs/promises";
 import pg from "pg";
-import { getMigrations } from "better-auth/db";
+import { getMigrations } from "better-auth/db/migration";
 
 if (!process.env.DATABASE_URL) {
   console.error("DATABASE_URL is not set.");

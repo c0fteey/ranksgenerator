@@ -1,27 +1,35 @@
 import { Suspense } from "react";
+import { headers } from "next/headers";
 import { connection } from "next/server";
-import { ErrorScreen } from "@/components/ErrorScreen";
-import { missingEnv } from "@/lib/config";
+import { redirect } from "next/navigation";
+import { SetupBlocked, SetupWizard, type EnvPresence } from "@/components/setup/SetupWizard";
+import { isConfigured, setupMode } from "@/lib/server/setup";
 
 // Shown (via the proxy) while required environment variables are missing.
 export default function SetupPage() {
   return (
     <Suspense>
-      <SetupNotice />
+      <Setup />
     </Suspense>
   );
 }
 
-async function SetupNotice() {
+async function Setup() {
   await connection(); // read env at request time, not at build
-  const missing = missingEnv();
-  // Variable names only (never values), and only in development.
-  const detail = process.env.NODE_ENV === "development" && missing.length ? ` Missing: ${missing.join(", ")}. See .env.example.` : "";
-  return (
-    <ErrorScreen
-      code={503}
-      title="Site setup incomplete"
-      message={`The server is missing required configuration, so sign-in is unavailable right now.${detail}`}
-    />
-  );
+  if (isConfigured()) redirect("/");
+  const h = await headers();
+  const host = h.get("host");
+  const mode = setupMode(host);
+  if (mode.kind === "blocked") return <SetupBlocked reason={mode.reason} />;
+
+  const env = process.env;
+  // Which settings already exist (e.g. DATABASE_URL added by the Vercel Neon integration). Booleans only.
+  const has: EnvPresence = {
+    database: !!env.DATABASE_URL,
+    discordApp: !!env.DISCORD_CLIENT_ID && !!env.DISCORD_CLIENT_SECRET,
+    bot: !!env.DISCORD_BOT_TOKEN && !!env.DISCORD_GUILD_ID,
+    siteUrl: !!env.BETTER_AUTH_URL,
+  };
+  const proto = h.get("x-forwarded-proto") ?? (mode.kind === "local" ? "http" : "https");
+  return <SetupWizard mode={mode.kind} has={has} defaultSiteUrl={host ? `${proto}://${host}` : ""} />;
 }
