@@ -29,7 +29,8 @@ async function Setup() {
     database: !!env.DATABASE_URL,
     discordApp: !!env.DISCORD_CLIENT_ID && !!env.DISCORD_CLIENT_SECRET,
     bot: !!env.DISCORD_BOT_TOKEN && !!env.DISCORD_GUILD_ID,
-    siteUrl: !!env.BETTER_AUTH_URL,
+    // A localhost value on Vercel is ignored by siteUrl(), so let the wizard ask for the real one.
+    siteUrl: !!env.BETTER_AUTH_URL && !(env.VERCEL && /localhost|127\.0\.0\.1/.test(env.BETTER_AUTH_URL)),
   };
   const proto = h.get("x-forwarded-proto") ?? (mode.kind === "local" ? "http" : "https");
   // Variable names only, never values.
