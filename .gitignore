@@ -43,3 +43,6 @@ next-env.d.ts
 
 # design screenshots
 /Screenshot_*.png
+
+# local launcher (this PC only)
+/baslat.bat
