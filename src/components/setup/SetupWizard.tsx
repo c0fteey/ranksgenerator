@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Check, Copy, Database, ExternalLink, KeyRound, Lock, Rocket, Wrench } from "lucide-react";
+import { useState, useSyncExternalStore, useTransition } from "react";
+import { Check, Clock, Copy, Database, ExternalLink, KeyRound, Lock, Rocket, Wrench } from "lucide-react";
 import { checkBotStep, checkDatabaseStep, checkDiscordStep, finishSetup, unlockSetup, type SetupResult } from "@/app/setup/actions";
 import { DiscordIcon } from "@/components/auth/SignInButton";
 import { Logo } from "@/components/Logo";
@@ -103,7 +103,26 @@ const A = ({ href, children }: { href: string; children: React.ReactNode }) => (
   </a>
 );
 
-export function SetupWizard({ mode, has, defaultSiteUrl }: { mode: "vercel" | "local"; has: EnvPresence; defaultSiteUrl: string }) {
+// Set when the wizard finishes; until the new deployment is live this page still shows up.
+const FINISHED_KEY = "setup-finished-at";
+const RECENT_MS = 10 * 60_000;
+// Snapshot for useSyncExternalStore: true while the wizard finished within RECENT_MS.
+const finishedRecently = () => {
+  try {
+    return Date.now() - Number(sessionStorage.getItem(FINISHED_KEY) ?? 0) < RECENT_MS;
+  } catch {
+    return false;
+  }
+};
+
+export function SetupWizard({ mode, has, missing, defaultSiteUrl }: { mode: "vercel" | "local"; has: EnvPresence; missing: string[]; defaultSiteUrl: string }) {
+  const finished = useSyncExternalStore(
+    () => () => {},
+    finishedRecently,
+    () => false,
+  );
+  const [restart, setRestart] = useState(false);
+  const justFinished = finished && !restart;
   const steps: StepId[] = [
     ...(mode === "vercel" ? (["unlock"] as const) : []),
     ...(has.database ? [] : (["database"] as const)),
@@ -133,6 +152,40 @@ export function SetupWizard({ mode, has, defaultSiteUrl }: { mode: "vercel" | "l
         setState(null);
       }
     });
+
+  if (justFinished && !done) {
+    return (
+      <Shell>
+        <div className="card flex w-full max-w-xl flex-col items-center gap-5 p-8 text-center sm:p-10">
+          <span className="grid size-14 place-items-center rounded-2xl border border-gold/30 bg-gold/10 text-gold">
+            <Clock className="size-7" aria-hidden />
+          </span>
+          <div className="flex flex-col gap-2">
+            <h1 className="text-2xl font-bold tracking-tight">Almost there</h1>
+            <p className="text-sm leading-relaxed text-muted">
+              {mode === "vercel"
+                ? "Your settings were saved and a new deployment is building. Until it's live (usually 1–2 minutes) this address still serves the old one, so you see this page."
+                : "Your settings were saved to .env.local. If this page stays, restart the dev server."}
+            </p>
+          </div>
+          <MissingList missing={missing} />
+          {mode === "vercel" && (
+            <p className="text-xs leading-relaxed text-muted">
+              Taking longer? In Vercel → Deployments, check that the newest deployment is “Ready”, or redeploy it. Under Settings → Environment Variables the names above must exist for Production.
+            </p>
+          )}
+          <div className="flex w-full flex-col gap-2 sm:flex-row">
+            <button type="button" onClick={() => window.location.reload()} className="btn-gold flex-1 rounded-full">
+              Refresh
+            </button>
+            <button type="button" onClick={() => setRestart(true)} className="btn flex-1 rounded-full">
+              Run the wizard again
+            </button>
+          </div>
+        </div>
+      </Shell>
+    );
+  }
 
   if (done) {
     return (
@@ -169,6 +222,9 @@ export function SetupWizard({ mode, has, defaultSiteUrl }: { mode: "vercel" | "l
   return (
     <Shell>
       <Header subtitle={mode === "vercel" ? "A few details and your site is live." : "Local setup: values are saved to .env.local."} />
+      <div className="w-full max-w-xl">
+        <MissingList missing={missing} />
+      </div>
 
       <ol className="flex w-full max-w-xl items-center justify-center gap-1 sm:gap-2" aria-label="Setup steps">
         {steps.map((id, i) => {
@@ -203,7 +259,14 @@ export function SetupWizard({ mode, has, defaultSiteUrl }: { mode: "vercel" | "l
             start(async () => {
               const result = await finishSetup(token, v);
               setState(result);
-              if (result?.ok) setDone({ message: result.message, botApiSecret: result.botApiSecret });
+              if (result?.ok) {
+                setDone({ message: result.message, botApiSecret: result.botApiSecret });
+                try {
+                  sessionStorage.setItem(FINISHED_KEY, String(Date.now()));
+                } catch {
+                  // storage blocked: the waiting screen just won't show
+                }
+              }
             });
         }}
       >
@@ -323,6 +386,22 @@ export function SetupWizard({ mode, has, defaultSiteUrl }: { mode: "vercel" | "l
         </div>
       </form>
     </Shell>
+  );
+}
+
+function MissingList({ missing }: { missing: string[] }) {
+  if (!missing.length) return null;
+  return (
+    <div className="flex w-full flex-col gap-2 rounded-xl border border-line bg-raised/50 p-4 text-left">
+      <span className="label">This deployment is missing</span>
+      <div className="flex flex-wrap gap-1.5">
+        {missing.map((name) => (
+          <code key={name} className="rounded-md border border-line bg-surface px-2 py-0.5 font-mono text-xs">
+            {name}
+          </code>
+        ))}
+      </div>
+    </div>
   );
 }
 

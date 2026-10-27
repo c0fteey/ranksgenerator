@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { SetupBlocked, SetupWizard, type EnvPresence } from "@/components/setup/SetupWizard";
+import { missingEnv } from "@/lib/config";
 import { isConfigured, setupMode } from "@/lib/server/setup";
 
 // Shown (via the proxy) while required environment variables are missing.
@@ -31,5 +32,6 @@ async function Setup() {
     siteUrl: !!env.BETTER_AUTH_URL,
   };
   const proto = h.get("x-forwarded-proto") ?? (mode.kind === "local" ? "http" : "https");
-  return <SetupWizard mode={mode.kind} has={has} defaultSiteUrl={host ? `${proto}://${host}` : ""} />;
+  // Variable names only, never values.
+  return <SetupWizard mode={mode.kind} has={has} missing={missingEnv()} defaultSiteUrl={host ? `${proto}://${host}` : ""} />;
 }
