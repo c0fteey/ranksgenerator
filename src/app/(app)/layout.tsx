@@ -5,7 +5,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { NavLinks, type NavItem } from "@/components/auth/NavLinks";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { COPYRIGHT_YEAR, SITE_NAME } from "@/lib/site";
-import { getViewer } from "@/lib/server/access";
+import { getViewer, type Viewer } from "@/lib/server/access";
 
 // Signed-in shell. The header and sidebar are static; the parts that depend on the viewer
 // stream in behind their own Suspense boundaries so the page never waits on the session.
@@ -24,12 +24,6 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
           </Suspense>
         </div>
       </header>
-      {/* Phones and small tablets: the sidebar is hidden, so the same links sit under the header. */}
-      <nav className="sticky top-16 z-30 flex gap-1 overflow-x-auto border-b border-line bg-bg/80 px-3 py-2 backdrop-blur [scrollbar-width:none] md:hidden">
-        <Suspense fallback={<NavLinks items={BASE_NAV} />}>
-          <ViewerNav />
-        </Suspense>
-      </nav>
       <div className="flex flex-1">
         <aside className="hidden w-56 shrink-0 border-r border-line p-4 md:block">
           <nav className="sticky top-20 flex flex-col gap-1">
@@ -54,15 +48,19 @@ const BASE_NAV: NavItem[] = [
   { href: "/history", label: "History", icon: "history" },
 ];
 
-async function ViewerMenu() {
-  const viewer = await getViewer();
-  return viewer ? <UserMenu name={viewer.name} email={viewer.email} image={viewer.image} /> : null;
-}
-
-async function ViewerNav() {
-  const viewer = await getViewer();
+function navFor(viewer: Viewer | null): NavItem[] {
   const items = [...BASE_NAV];
   if (viewer?.hasLicense) items.push({ href: "/license", label: "License", icon: "license" });
   if (viewer?.permissions.has("admin.access")) items.push({ href: "/admin", label: "Admin", icon: "admin" });
-  return <NavLinks items={items} />;
+  return items;
+}
+
+// On phones the sidebar is hidden; the profile menu carries the same links.
+async function ViewerMenu() {
+  const viewer = await getViewer();
+  return viewer ? <UserMenu name={viewer.name} email={viewer.email} image={viewer.image} nav={navFor(viewer)} /> : null;
+}
+
+async function ViewerNav() {
+  return <NavLinks items={navFor(await getViewer())} />;
 }
