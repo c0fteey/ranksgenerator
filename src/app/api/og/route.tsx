@@ -39,8 +39,8 @@ const loadLogo = () =>
     .catch(() => null));
 
 const THEMES = {
-  dark: { bg: "#121110", grid: "#ffffff", gridOpacity: 0.07, glow: 0.42, ink: "#f5f4f0", muted: "#b9b2a5", logoBg: "#f5f4f0" },
-  light: { bg: "#ffffff", grid: "#8a7440", gridOpacity: 0.2, glow: 0.5, ink: "#16181d", muted: "#16181d", logoBg: "#ffffff" },
+  dark: { bg: "#121110", grid: "#ffffff", gridOpacity: 0.07, glow: 0.42, ink: "#f5f4f0", muted: "#b9b2a5" },
+  light: { bg: "#ffffff", grid: "#8a7440", gridOpacity: 0.2, glow: 0.5, ink: "#16181d", muted: "#16181d" },
 };
 type Theme = (typeof THEMES)[keyof typeof THEMES];
 
@@ -71,13 +71,8 @@ export async function GET(request: NextRequest) {
         <img src={background(accent, t)} width={1200} height={630} alt="" style={{ position: "absolute", top: 0, left: 0 }} />
         <div style={{ position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", width: "100%", padding: "80px 80px 72px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-            {/* The logo is a black figure; a light disc keeps it visible on the dark theme. */}
-            {logo && (
-              <div style={{ display: "flex", width: 56, height: 56, borderRadius: 9999, backgroundColor: t.logoBg, overflow: "hidden" }}>
-                {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse renders plain img */}
-                <img src={logo} width={56} height={56} alt="" />
-              </div>
-            )}
+            {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse renders plain img */}
+            {logo && <img src={logo} width={56} height={56} alt="" style={{ borderRadius: 9999 }} />}
             <span style={{ fontSize: 34, fontWeight: 600, color: t.ink }}>{seo.siteName || seo.title}</span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
