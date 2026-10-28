@@ -173,7 +173,7 @@ export function Segmented<T extends string>({
   label: string;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex w-fit gap-1 rounded-xl border border-line bg-raised p-1">
+    <div role="radiogroup" aria-label={label} className="inline-flex w-fit max-w-full gap-1 overflow-x-auto rounded-xl border border-line bg-raised p-1 [scrollbar-width:none]">
       {options.map((o) => (
         <button
           key={o.value}
@@ -181,7 +181,7 @@ export function Segmented<T extends string>({
           role="radio"
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
-          className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
+          className={`shrink-0 whitespace-nowrap rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
             value === o.value ? "bg-gold text-black" : "text-muted hover:text-ink"
           }`}
         >

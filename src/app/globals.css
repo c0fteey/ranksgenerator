@@ -119,9 +119,9 @@
   .label {
     @apply text-xs font-semibold uppercase tracking-wide text-muted;
   }
-  /* Scroll area for long lists inside panels */
+  /* Scroll area for long lists inside panels. Phones scroll the page instead of a box inside it. */
   .scroll-area {
-    @apply max-h-[min(50dvh,28rem)] overflow-y-auto overscroll-contain rounded-xl pr-1;
+    @apply rounded-xl md:max-h-[min(60dvh,32rem)] md:overflow-y-auto md:overscroll-contain md:pr-1;
   }
   .stage {
     background-color: var(--stage-a);

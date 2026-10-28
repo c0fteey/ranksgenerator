@@ -24,6 +24,12 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
           </Suspense>
         </div>
       </header>
+      {/* Phones and small tablets: the sidebar is hidden, so the same links sit under the header. */}
+      <nav className="sticky top-16 z-30 flex gap-1 overflow-x-auto border-b border-line bg-bg/80 px-3 py-2 backdrop-blur [scrollbar-width:none] md:hidden">
+        <Suspense fallback={<NavLinks items={BASE_NAV} />}>
+          <ViewerNav />
+        </Suspense>
+      </nav>
       <div className="flex flex-1">
         <aside className="hidden w-56 shrink-0 border-r border-line p-4 md:block">
           <nav className="sticky top-20 flex flex-col gap-1">

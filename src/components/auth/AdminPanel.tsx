@@ -61,6 +61,8 @@ function Feedback({ state }: { state: ActionResult }) {
 }
 
 const who = (p: Person) => p.name ?? "Unknown user";
+// Discord's @everyone role is already named with an @.
+const roleName = (name: string) => `@${name.replace(/^@/, "")}`;
 
 /** Toggle pills for permissions; ones the viewer doesn't hold are locked (they can't grant or revoke them). */
 function PermissionPicker({ value, onChange, held }: { value: Permission[]; onChange: (v: Permission[]) => void; held: Set<Permission> }) {
@@ -128,26 +130,24 @@ function RoleRow({ role, held }: { role: NonNullable<AdminData["roles"]>["list"]
   const [pending, start] = useTransition();
   const dirty = value.length !== role.permissions.length || value.some((p) => !role.permissions.includes(p));
   return (
-    <div className="flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:justify-between">
-      <div className="flex min-w-0 items-center gap-2.5">
-        <span className="size-3 shrink-0 rounded-full border border-white/10" style={{ backgroundColor: role.color ?? "var(--color-muted)" }} />
-        <span className="truncate font-medium">@{role.name}</span>
-        {role.managed && <span className="rounded-full border border-line px-2 text-[11px] text-muted">bot</span>}
-      </div>
-      <div className="flex flex-col gap-2 lg:items-end">
-        <div className="flex flex-wrap items-center gap-3">
-          <PermissionPicker value={value} onChange={setValue} held={held} />
-          <button
-            type="button"
-            className="btn-gold px-4 py-1.5 text-xs"
-            disabled={!dirty || pending}
-            onClick={() => start(async () => setState(await saveRolePermissions(role.id, value)))}
-          >
-            {pending ? "Saving…" : "Save"}
-          </button>
+    <div className="flex flex-col gap-3 py-4 first:pt-1">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="size-3 shrink-0 rounded-full border border-white/10" style={{ backgroundColor: role.color ?? "var(--color-muted)" }} />
+          <span className="min-w-0 break-words font-medium">{roleName(role.name)}</span>
+          {role.managed && <span className="shrink-0 rounded-full border border-line px-2 text-[11px] text-muted">bot</span>}
         </div>
-        <Feedback state={state} />
+        <button
+          type="button"
+          className="btn-gold shrink-0 px-4 py-1.5 text-xs"
+          disabled={!dirty || pending}
+          onClick={() => start(async () => setState(await saveRolePermissions(role.id, value)))}
+        >
+          {pending ? "Saving…" : "Save"}
+        </button>
       </div>
+      <PermissionPicker value={value} onChange={setValue} held={held} />
+      <Feedback state={state} />
     </div>
   );
 }
@@ -426,6 +426,67 @@ function CopyText({ text, label }: { text: string; label: string }) {
   );
 }
 
+const ACTION_LABELS: Record<string, string> = {
+  "role.permissions": "Role permissions changed",
+  "account.permissions": "Account access changed",
+  "account.remove": "Account access removed",
+  "license.create": "License created",
+  "license.revoke": "License revoked",
+  "license.activate": "License activated",
+  "license.activate_failed": "License activation failed",
+  "license.developer_add": "Developer added",
+  "license.developer_remove": "Developer removed",
+  "seo.update": "SEO settings saved",
+  "seo.image": "Embed image uploaded",
+};
+
+const permissionLabel = (p: string) => (p in PERMISSIONS ? PERMISSIONS[p as Permission].label : p);
+
+/** Readable version of an audit entry's details: permission changes as +/- pills, the rest as key: value. */
+function ActivityDetails({ details }: { details: string }) {
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(details);
+  } catch {
+    return <div className="break-all font-mono text-[11px] text-muted">{details}</div>;
+  }
+  const { before, after, ...rest } = parsed;
+  const list = (v: unknown) => (Array.isArray(v) ? v.map(String) : null);
+  const [b, a] = [list(before), list(after)];
+  const added = b && a ? a.filter((p) => !b.includes(p)) : [];
+  const removed = b && a ? b.filter((p) => !a.includes(p)) : [];
+  // "keys" repeats the target for bulk license creation.
+  const fields = Object.entries(rest).filter(([k, v]) => k !== "keys" && v !== null && v !== undefined && v !== "");
+  return (
+    <div className="flex flex-col gap-1.5">
+      {(added.length > 0 || removed.length > 0) && (
+        <div className="flex flex-wrap gap-1.5">
+          {added.map((p) => (
+            <span key={`+${p}`} className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 text-[11px] font-medium text-emerald-500">
+              + {permissionLabel(p)}
+            </span>
+          ))}
+          {removed.map((p) => (
+            <span key={`-${p}`} className="rounded-full border border-red-500/40 bg-red-500/10 px-2 text-[11px] font-medium text-red-400">
+              − {permissionLabel(p)}
+            </span>
+          ))}
+        </div>
+      )}
+      {b && a && !added.length && !removed.length && <span className="text-xs text-muted">No permission changes.</span>}
+      {fields.length > 0 && (
+        <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted">
+          {fields.map(([k, v]) => (
+            <span key={k} className="break-all">
+              <span className="text-ink/70">{k}:</span> {Array.isArray(v) ? v.join(", ") : typeof v === "object" ? JSON.stringify(v) : String(v)}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ActivityTab({ activity }: { activity: AdminData["activity"] }) {
   return (
     <section className="card flex flex-col gap-3 p-5 sm:p-6">
@@ -435,15 +496,19 @@ function ActivityTab({ activity }: { activity: AdminData["activity"] }) {
       </div>
       <div className="scroll-area flex flex-col divide-y divide-line">
         {activity.map((a) => (
-          <div key={a.id} className="flex flex-col gap-0.5 py-2.5 text-sm">
-            <div className="flex flex-wrap items-center gap-x-2">
-              <span className="font-mono text-xs text-gold">{a.action}</span>
-              {a.target && <span className="font-mono text-xs">{a.target}</span>}
+          <div key={a.id} className="flex flex-col gap-1.5 py-3">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+              <div className="flex min-w-0 flex-wrap items-baseline gap-x-2">
+                <span className="text-sm font-semibold">{ACTION_LABELS[a.action] ?? a.action}</span>
+                {a.target && <span className="break-all font-mono text-xs text-muted">{a.target}</span>}
+              </div>
+              <span className="shrink-0 text-xs text-muted">{a.at}</span>
             </div>
             <div className="text-xs text-muted">
-              {a.at} · {a.actor === "bot" ? "Bot" : `${a.actorName ?? "Unknown user"} (${a.actor})`}
+              by {a.actor === "bot" ? "Bot" : <span className="text-ink/80">{a.actorName ?? "Unknown user"}</span>}
+              {a.actor !== "bot" && <span className="font-mono"> ({a.actor})</span>}
             </div>
-            {a.details && <div className="break-all font-mono text-[11px] text-muted">{a.details}</div>}
+            {a.details && <ActivityDetails details={a.details} />}
           </div>
         ))}
         {!activity.length && <p className="py-4 text-sm text-muted">Nothing yet.</p>}

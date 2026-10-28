@@ -6,7 +6,7 @@ import { saveSeoAction, uploadSeoImageAction } from "@/app/actions/seo";
 import type { ActionResult } from "@/app/actions/license";
 import { PAGES, type PageId } from "@/lib/pages";
 import { DEFAULT_SEO, SEO_IMAGE_MAX_BYTES, SEO_IMAGE_TYPES, SEO_LIMITS, seoImagePath, type SeoImageMode, type SeoImageTheme, type SeoPageText, type SeoSettings } from "@/lib/seo";
-import { ColorField, Field, Segmented, Switch } from "../ui";
+import { ColorField, Field, Segmented, Select, SelectItem, Switch } from "../ui";
 
 export interface SeoData {
   settings: SeoSettings;
@@ -56,8 +56,8 @@ export function SeoTab({ seo }: { seo: SeoData }) {
   };
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
-      <div className="flex flex-col gap-5">
+    <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
+      <div className="flex min-w-0 flex-col gap-5">
         <section className="card flex flex-col gap-5 p-5 sm:p-6">
           <div>
             <h2 className="font-semibold">Search &amp; browser tab</h2>
@@ -188,12 +188,14 @@ export function SeoTab({ seo }: { seo: SeoData }) {
           </div>
         </section>
 
-        <div className="flex flex-wrap items-center gap-3">
+        {/* Stays on screen while scrolling the long form. */}
+        <div className="card sticky bottom-4 z-20 flex flex-wrap items-center gap-2 p-3 sm:gap-3">
+          {dirty && <span className="w-full text-xs font-medium text-gold sm:w-auto">Unsaved changes</span>}
           <button type="button" className="btn-gold" disabled={!dirty || pending} onClick={() => start(async () => apply(await saveSeoAction(form)))}>
             {pending ? "Saving…" : "Save SEO settings"}
           </button>
           <button type="button" className="btn" disabled={!dirty || pending} onClick={() => setForm(saved)}>
-            Discard changes
+            Discard
           </button>
           <button
             type="button"
@@ -205,7 +207,9 @@ export function SeoTab({ seo }: { seo: SeoData }) {
             <RotateCcw className="size-4" aria-hidden />
             Defaults
           </button>
-          <Feedback state={state} />
+          <div className="w-full empty:hidden">
+            <Feedback state={state} />
+          </div>
         </div>
       </div>
 
@@ -223,7 +227,6 @@ function Feedback({ state }: { state: ActionResult }) {
   );
 }
 
-const PREVIEW_PAGES = Object.entries(PAGES).map(([value, p]) => ({ value: value as PageId, label: p.title }));
 
 /** Discord-style embed and Google result, from the form as it is now (before saving). */
 function Preview({ form, saved, siteUrl }: { form: SeoSettings; saved: SeoSettings; siteUrl: string }) {
@@ -242,11 +245,19 @@ function Preview({ form, saved, siteUrl }: { form: SeoSettings; saved: SeoSettin
   const themedStale = form.imageMode === "default" && drawn(form) !== drawn(saved);
 
   return (
-    <aside className="flex flex-col gap-5 xl:sticky xl:top-20 xl:self-start">
+    <aside className="flex min-w-0 flex-col gap-5 xl:sticky xl:top-20 xl:self-start">
       <section className="card flex flex-col gap-4 p-5 sm:p-6">
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-semibold">Preview</h2>
-          <Segmented label="Preview page" value={page} onChange={setPage} options={PREVIEW_PAGES} />
+          <div className="w-44">
+            <Select label="Preview page" value={page} onChange={(v) => setPage(v as PageId)}>
+              {PAGE_IDS.map((id) => (
+                <SelectItem key={id} value={id}>
+                  {form.pages[id].title} <span className="text-muted">{PAGES[id].path}</span>
+                </SelectItem>
+              ))}
+            </Select>
+          </div>
         </div>
 
         <div className="flex flex-col gap-2">

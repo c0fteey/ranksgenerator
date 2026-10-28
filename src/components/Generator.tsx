@@ -135,7 +135,7 @@ export default function Generator() {
       </section>
 
       <Section icon={Type} title="Tag basics" description="Text and template style for your rank tag." history={basics}>
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid gap-5 lg:grid-cols-2">
           <Field label="Rank text" hint="A–Z, 0–9, _ -.+! and space">
             <div className="relative">
               <input
