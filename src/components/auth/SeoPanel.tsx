@@ -188,11 +188,11 @@ export function SeoTab({ seo }: { seo: SeoData }) {
           </div>
         </section>
 
-        {/* Stays on screen while scrolling the long form. */}
-        <div className="card sticky bottom-4 z-20 flex flex-wrap items-center gap-2 p-3 sm:gap-3">
-          {dirty && <span className="w-full text-xs font-medium text-gold sm:w-auto">Unsaved changes</span>}
+        {/* With unsaved changes it stays on screen while scrolling the long form. */}
+        <div className={`card flex flex-wrap items-center gap-2 p-3 sm:gap-3 ${dirty ? "sticky bottom-4 z-20 border-gold/40" : ""}`}>
+          {dirty && <span className="hidden text-xs font-medium text-gold sm:inline">Unsaved changes</span>}
           <button type="button" className="btn-gold" disabled={!dirty || pending} onClick={() => start(async () => apply(await saveSeoAction(form)))}>
-            {pending ? "Saving…" : "Save SEO settings"}
+            {pending ? "Saving…" : "Save"}
           </button>
           <button type="button" className="btn" disabled={!dirty || pending} onClick={() => setForm(saved)}>
             Discard
@@ -202,10 +202,11 @@ export function SeoTab({ seo }: { seo: SeoData }) {
             className="btn"
             disabled={pending}
             onClick={() => setForm({ ...DEFAULT_SEO, imageVersion: saved.imageVersion })}
+            aria-label="Defaults"
             title="Fill the form with the default values. Nothing changes until you save."
           >
             <RotateCcw className="size-4" aria-hidden />
-            Defaults
+            <span className="hidden sm:inline">Defaults</span>
           </button>
           <div className="w-full empty:hidden">
             <Feedback state={state} />
