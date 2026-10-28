@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { Logo } from "@/components/Logo";
+import { RankShowcase } from "@/components/RankShowcase";
 import { SignInButton } from "@/components/auth/SignInButton";
 import { getViewer } from "@/lib/server/access";
 import { COPYRIGHT_YEAR, SITE_NAME } from "@/lib/site";
@@ -10,11 +11,12 @@ export const generateMetadata = () => pageMetadata("login");
 
 export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-8 px-4 py-12">
+    <main className="relative flex flex-1 flex-col items-center justify-center gap-8 px-4 py-12">
+      <RankShowcase />
       <Suspense>
         <RedirectIfSignedIn />
       </Suspense>
-      <div className="card flex w-full max-w-md flex-col items-center gap-6 p-8 text-center sm:p-10">
+      <div className="card relative flex w-full max-w-md flex-col items-center gap-6 p-8 text-center sm:p-10">
         <Logo size={64} />
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-bold tracking-tight">Welcome to {SITE_NAME}</h1>

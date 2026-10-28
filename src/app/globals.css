@@ -146,3 +146,23 @@
 .color-picker .react-colorful__hue-pointer {
   @apply size-4;
 }
+
+/* Example ranks on the login page drift gently, each at its own tilt */
+@keyframes rank-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--tilt, 0deg));
+  }
+  50% {
+    transform: translateY(-10px) rotate(var(--tilt, 0deg));
+  }
+}
+.rank-float {
+  transform: rotate(var(--tilt, 0deg));
+  animation: rank-float 6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rank-float {
+    animation: none;
+  }
+}
