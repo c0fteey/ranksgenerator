@@ -4,6 +4,9 @@ import { Logo } from "@/components/Logo";
 import { SignInButton } from "@/components/auth/SignInButton";
 import { getViewer } from "@/lib/server/access";
 import { COPYRIGHT_YEAR, SITE_NAME } from "@/lib/site";
+import { pageMetadata } from "@/lib/server/metadata";
+
+export const generateMetadata = () => pageMetadata("login");
 
 export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (

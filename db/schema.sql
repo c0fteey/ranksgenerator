@@ -52,3 +52,19 @@ CREATE TABLE IF NOT EXISTS audit_log (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS audit_log_recent ON audit_log (created_at DESC);
+
+-- Admin-editable settings (key 'seo': title, description, link embed). Also created on first save.
+CREATE TABLE IF NOT EXISTS site_settings (
+  key text PRIMARY KEY,
+  value jsonb NOT NULL,
+  updated_by text NOT NULL,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Uploaded files served by the site (name 'seo-image': the link embed image).
+CREATE TABLE IF NOT EXISTS site_assets (
+  name text PRIMARY KEY,
+  content_type text NOT NULL,
+  data bytea NOT NULL,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);

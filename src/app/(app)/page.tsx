@@ -1,6 +1,9 @@
 import { Suspense } from "react";
 import Generator from "@/components/Generator";
 import { Gate, PageFallback } from "@/components/auth/Gate";
+import { pageMetadata } from "@/lib/server/metadata";
+
+export const generateMetadata = () => pageMetadata("home");
 
 export default function Home() {
   return (

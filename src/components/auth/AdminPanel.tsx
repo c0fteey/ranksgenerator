@@ -6,6 +6,7 @@ import { createLicensesAction, revokeLicenseAction, saveAccountGrant, saveRolePe
 import type { ActionResult } from "@/app/actions/license";
 import { ALL_PERMISSIONS, PERMISSIONS, type Permission } from "@/lib/access/permissions";
 import { Segmented, Select, SelectItem } from "../ui";
+import { SeoTab, type SeoData } from "./SeoPanel";
 
 type Person = { id: string; name: string | null };
 type Status = "unused" | "active" | "expired" | "revoked";
@@ -21,16 +22,18 @@ export interface AdminData {
   licenses:
     | { key: string; status: Status; durationDays: number | null; owner: Person | null; developer: Person | null; note: string | null; createdAt: string; expiresAt: string | null }[]
     | null;
+  seo: SeoData | null;
   activity: { id: string; actor: string; actorName: string | null; action: string; target: string | null; details: string | null; at: string }[];
 }
 
-type Tab = "roles" | "accounts" | "licenses" | "activity";
+type Tab = "roles" | "accounts" | "licenses" | "seo" | "activity";
 
 export function AdminPanel({ data }: { data: AdminData }) {
   const tabs = [
     data.roles && { value: "roles" as Tab, label: "Roles" },
     data.accounts && { value: "accounts" as Tab, label: "Accounts" },
     data.licenses && { value: "licenses" as Tab, label: "Licenses" },
+    data.seo && { value: "seo" as Tab, label: "SEO" },
     { value: "activity" as Tab, label: "Activity" },
   ].filter((t): t is { value: Tab; label: string } => !!t);
   const [tab, setTab] = useState<Tab>(tabs[0].value);
@@ -42,6 +45,7 @@ export function AdminPanel({ data }: { data: AdminData }) {
       {tab === "roles" && data.roles && <RolesTab roles={data.roles} held={held} />}
       {tab === "accounts" && data.accounts && <AccountsTab accounts={data.accounts} held={held} />}
       {tab === "licenses" && data.licenses && <LicensesTab licenses={data.licenses} />}
+      {tab === "seo" && data.seo && <SeoTab seo={data.seo} />}
       {tab === "activity" && <ActivityTab activity={data.activity} />}
     </div>
   );

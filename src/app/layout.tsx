@@ -1,18 +1,23 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { InlineScript } from "@/components/InlineScript";
 import { THEME_SCRIPT } from "@/components/ThemeToggle";
-import { SITE_NAME } from "@/lib/site";
+import { pageMetadata } from "@/lib/server/metadata";
+import { getSeo } from "@/lib/server/seo";
 import "./globals.css";
 
 // Self-hosted by next/font (served from /_next/static/media).
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
-export const metadata: Metadata = {
-  title: `${SITE_NAME} – Minecraft rank tag generator`,
-  description: "Design pixel rank tags for your Minecraft server and download them as PNG.",
-};
+// Edited in Admin → SEO. getSeo() is cached and refreshed when the settings are saved.
+// Pages override this with their own pageMetadata(); this is the fallback (e.g. the 404 page).
+export const generateMetadata = (): Promise<Metadata> => pageMetadata("home");
+
+export async function generateViewport(): Promise<Viewport> {
+  const seo = await getSeo();
+  return { themeColor: seo.color };
+}
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

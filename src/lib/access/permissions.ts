@@ -5,6 +5,7 @@ export const PERMISSIONS = {
   "admin.access": { label: "Admin panel", description: "Open the admin panel and its activity log." },
   "licenses.manage": { label: "Manage licenses", description: "Create, list and revoke license keys." },
   "access.manage": { label: "Manage access", description: "Assign permissions to Discord roles and accounts." },
+  "seo.manage": { label: "Manage SEO", description: "Edit the site title, description and link embed." },
 } as const;
 
 export type Permission = keyof typeof PERMISSIONS;

@@ -8,13 +8,18 @@ import { missingEnv } from "@/lib/config";
 // Pages that need a session. Anything else falls through, so unknown URLs get the 404 page.
 const PROTECTED = ["/", "/history", "/license", "/admin"];
 
+// Link-preview crawlers skip the redirect so each page's own embed (title, image) is shown.
+// Safe because the pages still check the session themselves and render nothing private without one.
+const PREVIEW_BOTS = /discordbot|twitterbot|facebookexternalhit|slackbot|telegrambot|whatsapp|linkedinbot|embedly|redditbot|skypeuripreview/i;
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const configured = missingEnv().length === 0;
   if (pathname === "/setup") return configured ? NextResponse.redirect(new URL("/", request.url)) : NextResponse.next();
   if (!configured) return NextResponse.rewrite(new URL("/setup", request.url));
 
-  if (PROTECTED.includes(pathname) && !getSessionCookie(request)) {
+  const previewBot = PREVIEW_BOTS.test(request.headers.get("user-agent") ?? "");
+  if (PROTECTED.includes(pathname) && !previewBot && !getSessionCookie(request)) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
   return NextResponse.next();

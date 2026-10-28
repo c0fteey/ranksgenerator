@@ -7,7 +7,10 @@ import { ownerIds, type Viewer } from "@/lib/server/access";
 import { recentAudit } from "@/lib/server/audit";
 import { query } from "@/lib/server/db";
 import { getGuildRoles } from "@/lib/server/discord";
+import { siteUrl } from "@/lib/server/env";
 import { effectiveStatus, namesFor, recentLicenses } from "@/lib/server/licenses";
+import { readSeo } from "@/lib/server/seo";
+import { pageMetadata } from "@/lib/server/metadata";
 
 const dateFormat = new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" });
 const fmt = (d: Date | null) => (d ? dateFormat.format(d) : null);
@@ -16,12 +19,14 @@ const perms = (values: string[] | null | undefined) => (values ?? []).filter(isP
 // otherwise an unused key could be read off the log and claimed.
 const maskKeys = (text: string) => text.replace(/([0-9A-F]{4})(?:-[0-9A-F]{4}){4}-([0-9A-F]{4})/g, "$1-••••-••••-••••-••••-$2");
 
+export const generateMetadata = () => pageMetadata("admin");
+
 export default function AdminPage() {
   return (
     <>
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Admin</h1>
-        <p className="mt-1 text-sm text-muted">Discord role permissions, account access, licenses and activity.</p>
+        <p className="mt-1 text-sm text-muted">Discord role permissions, account access, licenses, SEO and activity.</p>
       </div>
       <Suspense fallback={<PageFallback />}>
         <Gate permission="admin.access">{(viewer) => <AdminData viewer={viewer} />}</Gate>
@@ -35,8 +40,9 @@ export default function AdminPage() {
 async function AdminData({ viewer }: { viewer: Viewer }) {
   const canAccess = viewer.permissions.has("access.manage");
   const canLicenses = viewer.permissions.has("licenses.manage");
+  const canSeo = viewer.permissions.has("seo.manage");
 
-  const [guildRoles, roleRows, grantRows, licenses, auditRows] = await Promise.all([
+  const [guildRoles, roleRows, grantRows, licenses, auditRows, seo] = await Promise.all([
     canAccess ? getGuildRoles() : null,
     canAccess ? query<{ role_id: string; permissions: string[] }>(`SELECT role_id, permissions FROM role_permissions`) : [],
     canAccess
@@ -46,6 +52,7 @@ async function AdminData({ viewer }: { viewer: Viewer }) {
       : [],
     canLicenses ? recentLicenses() : [],
     recentAudit(100),
+    canSeo ? readSeo() : null,
   ]);
 
   const owners = [...ownerIds()];
@@ -93,6 +100,7 @@ async function AdminData({ viewer }: { viewer: Viewer }) {
           expiresAt: fmt(l.expires_at),
         }))
       : null,
+    seo: seo ? { settings: seo, siteUrl: siteUrl() } : null,
     activity: auditRows.map((a) => ({
       id: a.id,
       actor: a.actor,

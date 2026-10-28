@@ -1,6 +1,9 @@
 import { Suspense } from "react";
 import { History } from "lucide-react";
 import { Gate, PageFallback } from "@/components/auth/Gate";
+import { pageMetadata } from "@/lib/server/metadata";
+
+export const generateMetadata = () => pageMetadata("history");
 
 export default function HistoryPage() {
   return (

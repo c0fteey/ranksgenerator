@@ -4,8 +4,11 @@ import { PageFallback } from "@/components/auth/Gate";
 import { CopyButton, DeveloperAccess } from "@/components/auth/LicenseControls";
 import { getViewer } from "@/lib/server/access";
 import { effectiveStatus, licenseOwnedBy, namesFor, type LicenseStatus } from "@/lib/server/licenses";
+import { pageMetadata } from "@/lib/server/metadata";
 
 const dateFormat = new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Istanbul" });
+
+export const generateMetadata = () => pageMetadata("license");
 
 export default function LicensePage() {
   return (
