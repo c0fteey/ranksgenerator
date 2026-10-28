@@ -39,9 +39,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 function Header({ subtitle }: { subtitle: string }) {
   return (
     <div className="flex flex-col items-center gap-4 text-center">
-      <div className="grid size-16 place-items-center rounded-2xl border border-line bg-raised">
-        <Logo scale={4} />
-      </div>
+      <Logo size={64} />
       <div className="flex flex-col gap-1.5">
         <h1 className="text-2xl font-bold tracking-tight">Set up {SITE_NAME}</h1>
         <p className="text-sm text-muted">{subtitle}</p>
