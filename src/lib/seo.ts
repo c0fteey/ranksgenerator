@@ -114,11 +114,14 @@ const hash = (s: string) => {
   return (h >>> 0).toString(36);
 };
 
+// Bump when the /api/og drawing changes, so link previews cached by Discord etc. are refetched.
+const OG_DESIGN = 2;
+
 /** Path of a page's embed image, relative to the site URL, or null for no image. */
 export function seoImagePath(s: SeoSettings, page: PageId = "home"): string | null {
   if (s.imageMode === "none") return null;
   if (s.imageMode === "url" && s.imageUrl) return s.imageUrl;
   if (s.imageMode === "upload" && s.imageVersion > 0) return `/api/seo/image?v=${s.imageVersion}`;
   const p = s.pages[page];
-  return `/api/og?page=${page}&v=${hash([s.siteName, s.title, s.color, s.imageTheme, p.title, p.description].join("|"))}`;
+  return `/api/og?page=${page}&v=${hash([OG_DESIGN, s.siteName, s.title, s.color, s.imageTheme, p.title, p.description].join("|"))}`;
 }

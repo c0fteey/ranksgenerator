@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
         <div style={{ position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", width: "100%", padding: "80px 80px 72px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
             {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse renders plain img */}
-            {logo && <img src={logo} width={56} height={56} alt="" style={{ borderRadius: 9999 }} />}
+            {logo && <img src={logo} width={56} height={56} alt="" />}
             <span style={{ fontSize: 34, fontWeight: 600, color: t.ink }}>{seo.siteName || seo.title}</span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
