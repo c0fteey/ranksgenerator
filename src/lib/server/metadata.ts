@@ -11,7 +11,8 @@ import { getSeo } from "./seo";
  */
 export async function pageMetadata(page: PageId): Promise<Metadata> {
   const seo = await getSeo();
-  const info = PAGES[page];
+  const info = seo.pages[page];
+  const path = PAGES[page].path;
   const home = page === "home";
   const title = home ? seo.title : `${info.title} · ${seo.siteName || seo.title}`;
   const description = home ? seo.description : info.description;
@@ -28,10 +29,10 @@ export async function pageMetadata(page: PageId): Promise<Metadata> {
     description,
     keywords: seo.keywords.split(",").map((k) => k.trim()).filter(Boolean),
     robots: seo.indexable ? { index: true, follow: true } : { index: false, follow: false },
-    alternates: { canonical: info.path },
+    alternates: { canonical: path },
     openGraph: {
       type: "website",
-      url: info.path,
+      url: path,
       siteName: seo.siteName || undefined,
       title: embedTitle,
       description: embedDescription,

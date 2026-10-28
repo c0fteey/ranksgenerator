@@ -1,10 +1,12 @@
-import type { PageId } from "./pages";
+import { PAGES, type PageId } from "./pages";
 import { SITE_NAME } from "./site";
 
 // SEO and link-embed settings edited in the admin panel. Shared by the server (metadata) and the
 // admin form (preview), so it holds no server-only code.
 
 export type SeoImageMode = "default" | "upload" | "url" | "none";
+export type SeoImageTheme = "dark" | "light";
+export type SeoPageText = { title: string; description: string };
 
 export interface SeoSettings {
   /** Browser tab and search result title. */
@@ -26,6 +28,10 @@ export interface SeoSettings {
   keywords: string;
   /** Let search engines index the site. */
   indexable: boolean;
+  /** Look of the themed image. */
+  imageTheme: SeoImageTheme;
+  /** Per-page name and description: drawn on the themed image and used for each page's embed. */
+  pages: Record<PageId, SeoPageText>;
   /** Bumped on every upload so embeds don't keep showing a cached old image. */
   imageVersion: number;
 }
@@ -42,10 +48,12 @@ export const DEFAULT_SEO: SeoSettings = {
   largeImage: true,
   keywords: "minecraft, rank tag, generator, pixel art",
   indexable: true,
+  imageTheme: "dark",
+  pages: Object.fromEntries(Object.entries(PAGES).map(([id, p]) => [id, { title: p.title, description: p.description }])) as Record<PageId, SeoPageText>,
   imageVersion: 0,
 };
 
-export const SEO_LIMITS = { title: 70, description: 200, siteName: 50, embedTitle: 100, embedDescription: 350, imageUrl: 500, keywords: 300 } as const;
+export const SEO_LIMITS = { title: 70, description: 200, siteName: 50, embedTitle: 100, embedDescription: 350, imageUrl: 500, keywords: 300, pageTitle: 40, pageDescription: 120 } as const;
 
 export const SEO_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"] as const;
 export const SEO_IMAGE_MAX_BYTES = 4 * 1024 * 1024;
@@ -68,6 +76,7 @@ export function normalizeSeo(input: unknown): SeoSettings {
   const v = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
   const d = DEFAULT_SEO;
   const imageUrl = text(v.imageUrl, SEO_LIMITS.imageUrl, "");
+  const pages = (v.pages && typeof v.pages === "object" ? v.pages : {}) as Record<string, Partial<SeoPageText> | undefined>;
   return {
     title: text(v.title, SEO_LIMITS.title, d.title) || d.title,
     description: text(v.description, SEO_LIMITS.description, d.description),
@@ -80,6 +89,20 @@ export function normalizeSeo(input: unknown): SeoSettings {
     largeImage: typeof v.largeImage === "boolean" ? v.largeImage : d.largeImage,
     keywords: text(v.keywords, SEO_LIMITS.keywords, d.keywords),
     indexable: typeof v.indexable === "boolean" ? v.indexable : d.indexable,
+    imageTheme: v.imageTheme === "light" ? "light" : "dark",
+    pages: Object.fromEntries(
+      (Object.keys(PAGES) as PageId[]).map((id) => {
+        const def = d.pages[id];
+        const given = pages[id] && typeof pages[id] === "object" ? pages[id] : {};
+        return [
+          id,
+          {
+            title: text(given.title, SEO_LIMITS.pageTitle, def.title) || def.title,
+            description: text(given.description, SEO_LIMITS.pageDescription, def.description),
+          },
+        ];
+      }),
+    ) as Record<PageId, SeoPageText>,
     imageVersion: Number.isSafeInteger(v.imageVersion) && (v.imageVersion as number) >= 0 ? (v.imageVersion as number) : 0,
   };
 }
@@ -96,5 +119,6 @@ export function seoImagePath(s: SeoSettings, page: PageId = "home"): string | nu
   if (s.imageMode === "none") return null;
   if (s.imageMode === "url" && s.imageUrl) return s.imageUrl;
   if (s.imageMode === "upload" && s.imageVersion > 0) return `/api/seo/image?v=${s.imageVersion}`;
-  return `/api/og?page=${page}&v=${hash(`${s.siteName}|${s.color}`)}`;
+  const p = s.pages[page];
+  return `/api/og?page=${page}&v=${hash([s.siteName, s.title, s.color, s.imageTheme, p.title, p.description].join("|"))}`;
 }

@@ -2,11 +2,11 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { ImageResponse } from "next/og";
 import { connection, type NextRequest } from "next/server";
-import { PAGES, isPageId } from "@/lib/pages";
+import { isPageId } from "@/lib/pages";
 import { getSeo } from "@/lib/server/seo";
 
 // Default link embed image: logo and site name at the top, the page name large in the accent
-// color, its description underneath, on a light grid with a soft glow. 1200×630 (large card).
+// color, its description underneath, on a dark (or light) grid with a soft glow. 1200×630 (large card).
 
 type Font = { name: string; data: ArrayBuffer; weight: 400 | 600 | 800; style: "normal" };
 
@@ -38,39 +38,51 @@ const loadLogo = () =>
     .then((b) => `data:image/png;base64,${b.toString("base64")}`)
     .catch(() => null));
 
+const THEMES = {
+  dark: { bg: "#121110", grid: "#ffffff", gridOpacity: 0.07, glow: 0.42, ink: "#f5f4f0", muted: "#b9b2a5", logoBg: "#f5f4f0" },
+  light: { bg: "#ffffff", grid: "#8a7440", gridOpacity: 0.2, glow: 0.5, ink: "#16181d", muted: "#16181d", logoBg: "#ffffff" },
+};
+type Theme = (typeof THEMES)[keyof typeof THEMES];
+
 // Satori can't draw radial gradients reliably, so the grid, glow and fade are one SVG layer.
-const background = (accent: string) =>
+// The accent is a validated #rrggbb, so it is safe to put into the markup.
+const background = (accent: string, t: Theme) =>
   `data:image/svg+xml;base64,${Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
 <defs>
-<pattern id="g" width="62" height="62" patternUnits="userSpaceOnUse"><path d="M62 0H0V62" fill="none" stroke="#8a7440" stroke-opacity="0.2" stroke-width="1.5"/></pattern>
-<radialGradient id="fade" gradientUnits="userSpaceOnUse" cx="0" cy="630" r="950"><stop offset="0.35" stop-color="#fff"/><stop offset="0.6" stop-color="#fff" stop-opacity="0.75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
-<radialGradient id="glow" gradientUnits="userSpaceOnUse" cx="1150" cy="0" r="760"><stop offset="0" stop-color="${accent}" stop-opacity="0.5"/><stop offset="0.45" stop-color="${accent}" stop-opacity="0.2"/><stop offset="1" stop-color="${accent}" stop-opacity="0"/></radialGradient>
+<pattern id="g" width="62" height="62" patternUnits="userSpaceOnUse"><path d="M62 0H0V62" fill="none" stroke="${t.grid}" stroke-opacity="${t.gridOpacity}" stroke-width="1.5"/></pattern>
+<radialGradient id="fade" gradientUnits="userSpaceOnUse" cx="0" cy="630" r="950"><stop offset="0.35" stop-color="${t.bg}"/><stop offset="0.6" stop-color="${t.bg}" stop-opacity="0.75"/><stop offset="1" stop-color="${t.bg}" stop-opacity="0"/></radialGradient>
+<radialGradient id="glow" gradientUnits="userSpaceOnUse" cx="1150" cy="0" r="760"><stop offset="0" stop-color="${accent}" stop-opacity="${t.glow}"/><stop offset="0.45" stop-color="${accent}" stop-opacity="${t.glow * 0.4}"/><stop offset="1" stop-color="${accent}" stop-opacity="0"/></radialGradient>
 </defs>
-<rect width="1200" height="630" fill="#fff"/><rect width="1200" height="630" fill="url(#g)"/><rect width="1200" height="630" fill="url(#fade)"/><rect width="1200" height="630" fill="url(#glow)"/>
+<rect width="1200" height="630" fill="${t.bg}"/><rect width="1200" height="630" fill="url(#g)"/><rect width="1200" height="630" fill="url(#fade)"/><rect width="1200" height="630" fill="url(#glow)"/>
 </svg>`).toString("base64")}`;
 
 export async function GET(request: NextRequest) {
   await connection();
   const id = request.nextUrl.searchParams.get("page");
-  const page = PAGES[isPageId(id) ? id : "home"];
   const [seo, fonts, logo] = await Promise.all([getSeo(), loadFonts(), loadLogo()]);
+  const page = seo.pages[isPageId(id) ? id : "home"];
   const accent = seo.color;
-  const ink = "#16181d";
+  const t = THEMES[seo.imageTheme];
 
   return new ImageResponse(
     (
-      <div style={{ width: "100%", height: "100%", display: "flex", position: "relative", backgroundColor: "#ffffff", fontFamily: "Geist" }}>
+      <div style={{ width: "100%", height: "100%", display: "flex", position: "relative", backgroundColor: t.bg, fontFamily: "Geist" }}>
         {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse renders plain img */}
-        <img src={background(accent)} width={1200} height={630} alt="" style={{ position: "absolute", top: 0, left: 0 }} />
+        <img src={background(accent, t)} width={1200} height={630} alt="" style={{ position: "absolute", top: 0, left: 0 }} />
         <div style={{ position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", width: "100%", padding: "80px 80px 72px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse renders plain img */}
-            {logo && <img src={logo} width={52} height={52} alt="" style={{ borderRadius: 9999 }} />}
-            <span style={{ fontSize: 34, fontWeight: 600, color: ink }}>{seo.siteName || seo.title}</span>
+            {/* The logo is a black figure; a light disc keeps it visible on the dark theme. */}
+            {logo && (
+              <div style={{ display: "flex", width: 56, height: 56, borderRadius: 9999, backgroundColor: t.logoBg, overflow: "hidden" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse renders plain img */}
+                <img src={logo} width={56} height={56} alt="" />
+              </div>
+            )}
+            <span style={{ fontSize: 34, fontWeight: 600, color: t.ink }}>{seo.siteName || seo.title}</span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             <span style={{ fontSize: 104, fontWeight: 800, color: accent, letterSpacing: -3, lineHeight: 1 }}>{page.title}</span>
-            <span style={{ fontSize: 36, fontWeight: 400, color: ink, lineHeight: 1.3, maxWidth: 1000 }}>{page.description}</span>
+            {page.description && <span style={{ fontSize: 36, fontWeight: 400, color: t.muted, lineHeight: 1.3, maxWidth: 1000 }}>{page.description}</span>}
           </div>
         </div>
       </div>

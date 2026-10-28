@@ -5,7 +5,7 @@ import { ImageUp, RotateCcw } from "lucide-react";
 import { saveSeoAction, uploadSeoImageAction } from "@/app/actions/seo";
 import type { ActionResult } from "@/app/actions/license";
 import { PAGES, type PageId } from "@/lib/pages";
-import { DEFAULT_SEO, SEO_IMAGE_MAX_BYTES, SEO_IMAGE_TYPES, SEO_LIMITS, seoImagePath, type SeoImageMode, type SeoSettings } from "@/lib/seo";
+import { DEFAULT_SEO, SEO_IMAGE_MAX_BYTES, SEO_IMAGE_TYPES, SEO_LIMITS, seoImagePath, type SeoImageMode, type SeoImageTheme, type SeoPageText, type SeoSettings } from "@/lib/seo";
 import { ColorField, Field, Segmented, Switch } from "../ui";
 
 export interface SeoData {
@@ -20,6 +20,13 @@ const IMAGE_MODES: { value: SeoImageMode; label: string }[] = [
   { value: "none", label: "None" },
 ];
 
+const IMAGE_THEMES: { value: SeoImageTheme; label: string }[] = [
+  { value: "dark", label: "Dark" },
+  { value: "light", label: "Light" },
+];
+
+const PAGE_IDS = Object.keys(PAGES) as PageId[];
+
 const COLOR_PRESETS = ["#e2b33c", "#5865f2", "#57f287", "#ed4245", "#eb459e", "#ffffff"];
 
 export function SeoTab({ seo }: { seo: SeoData }) {
@@ -29,6 +36,7 @@ export function SeoTab({ seo }: { seo: SeoData }) {
   const [pending, start] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
   const set = <K extends keyof SeoSettings>(key: K, value: SeoSettings[K]) => setForm((f) => ({ ...f, [key]: value }));
+  const setPage = (id: PageId, patch: Partial<SeoPageText>) => setForm((f) => ({ ...f, pages: { ...f.pages, [id]: { ...f.pages[id], ...patch } } }));
   const dirty = JSON.stringify(form) !== JSON.stringify(saved);
 
   const apply = (result: Awaited<ReturnType<typeof saveSeoAction>>) => {
@@ -99,7 +107,12 @@ export function SeoTab({ seo }: { seo: SeoData }) {
           </Field>
           <Field label="Image">
             <Segmented label="Embed image" value={form.imageMode} onChange={(v) => set("imageMode", v)} options={IMAGE_MODES} />
-            {form.imageMode === "default" && <span className="text-xs text-muted">A card with the logo, site name and each page&apos;s name, in the embed color.</span>}
+            {form.imageMode === "default" && (
+              <div className="flex flex-wrap items-center gap-3">
+                <Segmented label="Image theme" value={form.imageTheme} onChange={(v) => set("imageTheme", v)} options={IMAGE_THEMES} />
+                <span className="text-xs text-muted">A card with the logo, site name and the page&apos;s name and description below, in the embed color.</span>
+              </div>
+            )}
             {form.imageMode === "upload" && (
               <div className="flex flex-wrap items-center gap-3">
                 <input
@@ -139,6 +152,40 @@ export function SeoTab({ seo }: { seo: SeoData }) {
               <Switch checked={form.largeImage} onChange={(v) => set("largeImage", v)} label="Large image" />
             </div>
           )}
+        </section>
+
+        <section className="card flex flex-col gap-5 p-5 sm:p-6">
+          <div>
+            <h2 className="font-semibold">Pages</h2>
+            <p className="text-sm text-muted">
+              The big name and the line under it on each page&apos;s themed image. Other pages also use them as their embed title and description.
+            </p>
+          </div>
+          <div className="flex flex-col divide-y divide-line">
+            {PAGE_IDS.map((id) => (
+              <div key={id} className="grid gap-3 py-4 first:pt-0 last:pb-0 sm:grid-cols-[10rem_minmax(0,1fr)]">
+                <Field label={PAGES[id].path}>
+                  <input
+                    value={form.pages[id].title}
+                    maxLength={SEO_LIMITS.pageTitle}
+                    placeholder={DEFAULT_SEO.pages[id].title}
+                    aria-label={`${PAGES[id].path} name`}
+                    onChange={(e) => setPage(id, { title: e.target.value })}
+                    className="input"
+                  />
+                </Field>
+                <Field label="Description">
+                  <input
+                    value={form.pages[id].description}
+                    maxLength={SEO_LIMITS.pageDescription}
+                    aria-label={`${PAGES[id].path} description`}
+                    onChange={(e) => setPage(id, { description: e.target.value })}
+                    className="input"
+                  />
+                </Field>
+              </div>
+            ))}
+          </div>
         </section>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -181,7 +228,7 @@ const PREVIEW_PAGES = Object.entries(PAGES).map(([value, p]) => ({ value: value 
 /** Discord-style embed and Google result, from the form as it is now (before saving). */
 function Preview({ form, saved, siteUrl }: { form: SeoSettings; saved: SeoSettings; siteUrl: string }) {
   const [page, setPage] = useState<PageId>("home");
-  const info = PAGES[page];
+  const info = form.pages[page];
   const home = page === "home";
   const tabTitle = home ? form.title : `${info.title} · ${form.siteName || form.title}`;
   const title = home ? form.embedTitle || form.title : tabTitle;
@@ -190,8 +237,9 @@ function Preview({ form, saved, siteUrl }: { form: SeoSettings; saved: SeoSettin
   const image = seoImagePath(form.imageMode === "upload" ? { ...form, imageVersion: saved.imageVersion } : form.imageMode === "default" ? saved : form, page);
   const themed = !!image && image.startsWith("/api/og");
   const large = !!image && (themed || form.largeImage);
-  const url = `${siteUrl}${info.path}`;
-  const themedStale = form.imageMode === "default" && (form.color !== saved.color || form.siteName !== saved.siteName);
+  const url = `${siteUrl}${PAGES[page].path}`;
+  const drawn = (s: SeoSettings) => JSON.stringify([s.siteName, s.title, s.color, s.imageTheme, s.pages]);
+  const themedStale = form.imageMode === "default" && drawn(form) !== drawn(saved);
 
   return (
     <aside className="flex flex-col gap-5 xl:sticky xl:top-20 xl:self-start">
@@ -225,7 +273,7 @@ function Preview({ form, saved, siteUrl }: { form: SeoSettings; saved: SeoSettin
               </div>
             </div>
           </div>
-          {themedStale && <span className="text-xs text-muted">Save to redraw the themed image with the new name and color.</span>}
+          {themedStale && <span className="text-xs text-muted">Save to redraw the themed image with your changes.</span>}
         </div>
 
         <div className="flex flex-col gap-2">
