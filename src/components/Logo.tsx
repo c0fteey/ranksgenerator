@@ -8,7 +8,7 @@ export function Logo({ size = 40 }: { size?: number }) {
       width={size}
       height={size}
       preload
-      className="shrink-0 rounded-full border border-line object-cover"
+      className="shrink-0 rounded-full object-cover"
       style={{ width: size, height: size }}
     />
   );
