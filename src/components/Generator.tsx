@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Maximize2, Palette, Pencil, Sparkles, Type } from "lucide-react";
+import { Download, Layers, Maximize2, Palette, Pencil, Sparkles, Type } from "lucide-react";
 import { BASE_HEX, FRAMES, type Frame } from "@/lib/tag/frames";
 import { PRESET_ICONS } from "@/lib/tag/icons";
 import { MAX_LENGTH, sanitizeText } from "@/lib/tag/font";
-import { renderIconBox, renderRank, renderTagBox, type BoxStyle } from "@/lib/tag/render";
+import { renderIconBox, renderRank, renderTagBox, withDropShadow, type BoxStyle } from "@/lib/tag/render";
 import { saveMyIcons, useMyIcons } from "@/lib/tag/myIcons";
 import { saveMyFrames, useMyFrames } from "@/lib/tag/myFrames";
 import { useUndoable } from "@/lib/useUndoable";
@@ -62,6 +62,7 @@ export default function Generator() {
     c1: BASE_HEX,
     c2: TAG_PRESETS[3],
   });
+  const dropShadow = useUndoable({ enabled: false, opacity: 40 });
   const [trueSize, setTrueSize] = useState(false);
   const [trueScale, setTrueScale] = useState(2);
   const [backdrop, setBackdrop] = useState<Backdrop>("dark");
@@ -81,7 +82,9 @@ export default function Generator() {
     colors: ic.syncColors ? tagColors : tintColors(ic),
   };
 
-  const bitmap = renderRank({ text: b.text, frame: findFrame(b.frameId), colors: tagColors, textColor: TEXT_COLOR, shadow: true, icon, iconStyle });
+  const ds = dropShadow.value;
+  const rank = renderRank({ text: b.text, frame: findFrame(b.frameId), colors: tagColors, textColor: TEXT_COLOR, shadow: true, icon, iconStyle });
+  const bitmap = ds.enabled ? withDropShadow(rank, ds.opacity / 100) : rank;
   const previewScale = trueSize ? trueScale : Math.max(2, Math.min(12, Math.floor(720 / bitmap.width)));
   // Editor preview sits on solid black; true size uses the chosen backdrop.
   const stage = trueSize ? BACKDROPS[backdrop] : { className: "", style: { background: "#000000" } };
@@ -230,6 +233,44 @@ export default function Generator() {
               </div>
             )}
           </>
+        )}
+      </Section>
+
+      <Section icon={Layers} title="Drop shadow" description="Soft shadow under the whole tag, included in the PNG." history={dropShadow}>
+        <SwitchCard
+          title="Drop shadow"
+          description={ds.enabled ? "A shadow one pixel down and right of the tag." : "The tag is exported without a shadow."}
+          checked={ds.enabled}
+          onChange={(enabled) => dropShadow.set({ enabled })}
+          on="On"
+          off="Off"
+        />
+        {ds.enabled && (
+          <Field label="Shadow opacity">
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                aria-label="Shadow opacity"
+                className="min-w-0 flex-1 accent-gold"
+                min={0}
+                max={100}
+                value={ds.opacity}
+                onChange={(e) => dropShadow.set({ opacity: Number(e.target.value) })}
+              />
+              <div className="relative w-24 shrink-0">
+                <input
+                  type="number"
+                  aria-label="Shadow opacity percent"
+                  className="input pr-8"
+                  min={0}
+                  max={100}
+                  value={ds.opacity}
+                  onChange={(e) => dropShadow.set({ opacity: Math.max(0, Math.min(100, Math.round(Number(e.target.value) || 0))) })}
+                />
+                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-muted">%</span>
+              </div>
+            </div>
+          </Field>
         )}
       </Section>
 

@@ -130,6 +130,22 @@ function hconcat(a: Bitmap, b: Bitmap, gap: number): Bitmap {
   return { width, height, data };
 }
 
+// Pixel drop shadow one pixel down and right; opacity is 0–1. Grows the bitmap by one row and column.
+export function withDropShadow(src: Bitmap, opacity: number): Bitmap {
+  const width = src.width + 1;
+  const height = src.height + 1;
+  const data = new Uint8ClampedArray(width * height * 4);
+  const alpha = Math.round(Math.max(0, Math.min(1, opacity)) * 255);
+  for (let y = 0; y < src.height; y++)
+    for (let x = 0; x < src.width; x++) if (src.data[(y * src.width + x) * 4 + 3]) data[((y + 1) * width + x + 1) * 4 + 3] = alpha;
+  for (let y = 0; y < src.height; y++)
+    for (let x = 0; x < src.width; x++) {
+      const i = (y * src.width + x) * 4;
+      if (src.data[i + 3]) data.set(src.data.subarray(i, i + 4), (y * width + x) * 4);
+    }
+  return { width, height, data };
+}
+
 export function renderRank(o: RankOptions): Bitmap {
   const tag = renderTagBox(o);
   return o.icon ? hconcat(renderIconBox(o.icon, o.iconStyle), tag, BOX_GAP) : tag;
