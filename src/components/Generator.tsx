@@ -35,6 +35,7 @@ const BACKDROPS = {
 };
 type Backdrop = keyof typeof BACKDROPS;
 const BACKDROP_OPTIONS = Object.entries(BACKDROPS).map(([value, b]) => ({ value: value as Backdrop, label: b.label }));
+const SHADOW_SIZES = [1, 2, 3, 4].map((s) => ({ value: String(s), label: `${s}px` }));
 const MODES = [
   { value: "solid", label: "Solid" },
   { value: "gradient", label: "Gradient" },
@@ -62,7 +63,7 @@ export default function Generator() {
     c1: BASE_HEX,
     c2: TAG_PRESETS[3],
   });
-  const dropShadow = useUndoable({ enabled: false, opacity: 40 });
+  const dropShadow = useUndoable({ enabled: false, opacity: 40, size: 1 });
   const [trueSize, setTrueSize] = useState(false);
   const [trueScale, setTrueScale] = useState(2);
   const [backdrop, setBackdrop] = useState<Backdrop>("dark");
@@ -84,7 +85,7 @@ export default function Generator() {
 
   const ds = dropShadow.value;
   const rank = renderRank({ text: b.text, frame: findFrame(b.frameId), colors: tagColors, textColor: TEXT_COLOR, shadow: true, icon, iconStyle });
-  const bitmap = ds.enabled ? withDropShadow(rank, ds.opacity / 100) : rank;
+  const bitmap = ds.enabled ? withDropShadow(rank, ds.opacity / 100, ds.size) : rank;
   const previewScale = trueSize ? trueScale : Math.max(2, Math.min(12, Math.floor(720 / bitmap.width)));
   // Editor preview sits on solid black; true size uses the chosen backdrop.
   const stage = trueSize ? BACKDROPS[backdrop] : { className: "", style: { background: "#000000" } };
@@ -239,12 +240,17 @@ export default function Generator() {
       <Section icon={Layers} title="Drop shadow" description="Soft shadow under the whole tag, included in the PNG." history={dropShadow}>
         <SwitchCard
           title="Drop shadow"
-          description={ds.enabled ? "A shadow one pixel down and right of the tag." : "The tag is exported without a shadow."}
+          description={ds.enabled ? `A shadow ${ds.size}px down and right of the tag.` : "The tag is exported without a shadow."}
           checked={ds.enabled}
           onChange={(enabled) => dropShadow.set({ enabled })}
           on="On"
           off="Off"
         />
+        {ds.enabled && (
+          <Field label="Shadow size">
+            <Segmented label="Shadow size" value={String(ds.size)} onChange={(v) => dropShadow.set({ size: Number(v) })} options={SHADOW_SIZES} />
+          </Field>
+        )}
         {ds.enabled && (
           <Field label="Shadow opacity">
             <div className="flex items-center gap-3">
