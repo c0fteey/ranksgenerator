@@ -46,3 +46,10 @@ next-env.d.ts
 
 # local launcher (this PC only)
 /baslat.bat
+
+# Uiverse Galaxy archive (browse only, copy single elements into src)
+/vendor/
+
+# Claude Code: per-machine settings and the prebuilt Impeccable engine
+/.claude/settings.local.json
+/.claude/skills/impeccable/scripts/bin/

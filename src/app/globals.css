@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Agent skills ship their own example code; keep their class names out of the build */
+@source not "../../.claude";
+
 @theme {
   --color-bg: #121110;
   --color-surface: #1a1917;
