@@ -55,6 +55,12 @@
       "skillPath": "skills/taste-skill/SKILL.md",
       "computedHash": "53590ee9325bee34d7888bf0d81bd3941a108b1e7850df46802d93104e3f2b90"
     },
+    "diagram-design": {
+      "source": "cathrynlavery/diagram-design",
+      "sourceType": "github",
+      "skillPath": "skills/diagram-design/SKILL.md",
+      "computedHash": "67f22746f17be0f3d79393cf96b92d7e7f5ce10459c4ebd42956ab29c2ced10c"
+    },
     "emil-design-eng": {
       "source": "emilkowalski/skills",
       "sourceType": "github",
@@ -78,6 +84,12 @@
       "sourceType": "github",
       "skillPath": "skills/improve-animations/SKILL.md",
       "computedHash": "d8c10dad70287ad3a8f85f98dc7e763a490c8d669d883e250c28322a71a79a90"
+    },
+    "just-scrape": {
+      "source": "ScrapeGraphAI/just-scrape",
+      "sourceType": "github",
+      "skillPath": "skills/just-scrape/SKILL.md",
+      "computedHash": "bcf0ee77f3ed7512147e4f18f831f6346c072e2f0ba7d23655c1bfaab96f0c62"
     },
     "mobile-native": {
       "source": "emilkowalski/skills",
@@ -109,11 +121,23 @@
       "skillPath": "skills/review-animations/SKILL.md",
       "computedHash": "bb706e42e29a74fe8acf1e3c6ef10f066d2ccc58eb8cff5ab89dd21876231ea3"
     },
+    "scrapling-official": {
+      "source": "D4Vinci/Scrapling",
+      "sourceType": "github",
+      "skillPath": "agent-skill/Scrapling-Skill/SKILL.md",
+      "computedHash": "0789f4d39da623d0b9356b9202465fe753d5a991cce12d7b4bc99cb87da0c680"
+    },
     "stageshow": {
       "source": "benjitaylor/skills",
       "sourceType": "github",
       "skillPath": "stageshow/SKILL.md",
       "computedHash": "ba928f2526ec0a7da76a0a7fe0f6b10d23b5a1bf1a292fd7f1001f4597521ad8"
+    },
+    "video-shotcraft": {
+      "source": "Vincentwei1021/video-shotcraft",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "e4a9e35c977e1c097034f723f5b5395aa4b06f5fc2d8ad394f4d6c91d1bc1b93"
     },
     "write-swift": {
       "source": "emilkowalski/skills",

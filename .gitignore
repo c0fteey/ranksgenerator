@@ -53,3 +53,6 @@ next-env.d.ts
 # Claude Code: per-machine settings and the prebuilt Impeccable engine
 /.claude/settings.local.json
 /.claude/skills/impeccable/scripts/bin/
+
+# Large skill (54 MB of media); restore with: npx skills experimental_install
+/.claude/skills/video-shotcraft/
