@@ -157,6 +157,12 @@
       "skillPath": "skills/just-scrape/SKILL.md",
       "computedHash": "bcf0ee77f3ed7512147e4f18f831f6346c072e2f0ba7d23655c1bfaab96f0c62"
     },
+    "make-interfaces-feel-better": {
+      "source": "WatermelonCorp/watermelon-platform",
+      "sourceType": "github",
+      "skillPath": "skills/make-interfaces-feel-better/SKILL.md",
+      "computedHash": "2c3576e63d8c39d75ed327f1dcf6aab7aec0edf293a55f6cb3f7b8571974a01c"
+    },
     "mobile-native": {
       "source": "emilkowalski/skills",
       "sourceType": "github",
@@ -324,6 +330,12 @@
       "sourceType": "github",
       "skillPath": "SKILL.md",
       "computedHash": "e4a9e35c977e1c097034f723f5b5395aa4b06f5fc2d8ad394f4d6c91d1bc1b93"
+    },
+    "watermelon-ui": {
+      "source": "WatermelonCorp/watermelon-platform",
+      "sourceType": "github",
+      "skillPath": "skills/watermelon-ui/SKILL.md",
+      "computedHash": "3db9de1cea26abc218a8badf438e1aeebd3b7a80d98d61910a0d83de7c2b043a"
     },
     "write-swift": {
       "source": "emilkowalski/skills",
